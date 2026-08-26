@@ -32,12 +32,35 @@ dsh plugin --profile web rm dsh-novel-ai
 
 ## 控制端点（挂在 DSH web 服务上）
 
-- `GET  /dsh-novel-ai/status`  — 运行状态 JSON
-- `GET  /dsh-novel-ai/logs`    — 最近日志（启动器 + 引擎，排障用）
-- `POST /dsh-novel-ai/open`    — 重新打开独立窗口
-- `POST /dsh-novel-ai/stop`    — 停止引擎与静态服务
-- `POST /dsh-novel-ai/restart` — 先停后启（幂等）
-- `POST /dsh-novel-ai/verify`  — 触发全接口自检，返回报告 JSON
+- `GET  /dsh-novel-ai/status`     — 运行状态 JSON
+- `GET  /dsh-novel-ai/health`     — 汇总健康（服务 + 引擎进程详情 + watchdog）
+- `GET  /dsh-novel-ai/logs`       — 最近日志（启动器 + 引擎，排障用）
+- `POST /dsh-novel-ai/open`       — 重新打开独立窗口
+- `POST /dsh-novel-ai/stop`       — 停止引擎与静态服务
+- `POST /dsh-novel-ai/restart`    — 先停后启（幂等，重启后常驻）
+- `POST /dsh-novel-ai/verify`     — 触发全接口自检（并发互斥），返回报告 JSON
+- `POST /dsh-novel-ai/watchdog`   — `{"enabled": true|false}` 运行时开关自动恢复
+
+## 健壮性设计（v0.3）
+
+| 能力 | 说明 |
+|------|------|
+| **watchdog 自愈** | 引擎崩溃后自动重启（最多 3 次，指数退避 5s/15s/45s），可用 `NOVEL_AI_WATCHDOG=0` 或端点关闭 |
+| **inProcess 安全** | 插件在 DSH 进程内运行时**不写 PID_FILE**，外部 `stop` 不会误杀 DSH 进程（v0.2 隐患修复） |
+| **单实例锁** | 独立 CLI 重复启动被拒绝；`restart` 会等待旧实例完全退出再接管 |
+| **防挂死** | Python 探测全异步；引擎秒退快速失败；开窗 5s 超时保护；HTTP 请求全部限时 |
+| **--daemon 模式** | `start/restart --daemon` 自行后台化，命令替换不会死等，1s 内确认结果 |
+| **日志轮转** | 日志超 5MB 自动备份为 `.1` |
+
+## 独立运行（不经过 DSH）
+
+```bash
+node lib/launcher.js start --daemon    # 后台启动（推荐）
+node lib/launcher.js start             # 前台启动（Ctrl+C 停止）
+node lib/launcher.js stop              # 跨进程停止（委托信号，安全）
+node lib/launcher.js status            # 状态查询（含引擎进程详情）
+node lib/launcher.js restart --daemon  # 平滑重启
+```
 
 ## 接口自检
 
@@ -70,14 +93,6 @@ bash scripts/self-heal.sh --verify    # 恢复后自动跑全接口自检
 自救流程：清理残留进程与陈旧 PID → 拉起引擎 + 静态服务 + 转发 + 开窗 →
 健康确认 → 生成 `self-heal-report.json`。退出码 0 = 恢复成功。
 服务由 `setsid` 放入独立会话，脱离脚本生命周期，可长期常驻。
-
-## 独立运行（不经过 DSH）
-
-```bash
-node lib/launcher.js start    # 启动（Ctrl+C 停止）
-node lib/launcher.js stop     # 跨进程停止
-node lib/launcher.js status   # 状态查询
-```
 
 ## 数据位置
 

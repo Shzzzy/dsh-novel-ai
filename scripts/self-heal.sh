@@ -120,7 +120,7 @@ case "$MODE" in
     exit 0
     ;;
   verify)
-    $VERIFY
+    timeout 120 $VERIFY   # 超时保护: 自检最长 120s, 防异常挂死
     exit $?
     ;;
 esac
@@ -165,7 +165,7 @@ report_status
 
 if port_in_use "$ENGINE_PORT" && port_in_use "$FORWARD_PORT"; then
   log "✅ 自救完成: Novel AI 已恢复运行"
-  [[ "$MODE" == "verify" ]] && { $VERIFY; }
+  [[ "$MODE" == "verify" ]] && { timeout 120 $VERIFY; }  # 超时保护
   exit 0
 else
   warn "❌ 自救失败: 服务未就绪, 请查看 $DATA_ROOT/logs/engine.log"
