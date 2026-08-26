@@ -24,6 +24,7 @@
     "runtime",
     "web",
     "assets",
+    "scripts",
     "cordis.patch.yml",
     "README.md",
     "LICENSE"
