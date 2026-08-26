@@ -1,0 +1,16 @@
+# ============================================================================
+# dsh-novel-ai —— DSH bundle patch
+# ============================================================================
+# 本文件把 Novel AI 启动器插件插入 Web profile 的配置树。
+# DSH 启动时按 bundle 层栈叠加各插件 patch，插件 apply() 后自动拉起
+# Python 引擎 + 前端静态服务，并在独立窗口打开创作系统。
+#
+# 本地开发安装：
+#   dsh plugin --profile web add link:/home/host/deepseek_harmness/dsh-novel-ai
+# 卸载：
+#   dsh plugin --profile web rm dsh-novel-ai
+# ============================================================================
+
+- insert:
+    - id: dsh-novel-ai
+      name: dsh-novel-ai

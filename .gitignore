@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# 运行时数据与日志
+*.log
+test-report.json
+self-heal-report.json
+
+# 系统
+.DS_Store

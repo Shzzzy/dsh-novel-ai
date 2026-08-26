@@ -1,0 +1,29 @@
+{
+  "name": "dsh-novel-ai",
+  "version": "0.1.0",
+  "description": "Novel AI 启动器插件 —— 在 DeepSeek Harness 中一键拉起 AI 长篇小说创作系统（独立窗口模式，保留原界面）",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "novel",
+    "writing",
+    "小说"
+  ],
+  "type": "module",
+  "main": "lib/index.js",
+  "files": [
+    "lib",
+    "runtime",
+    "web",
+    "assets",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "license": "MIT"
+}
