@@ -1,6 +1,6 @@
 {
   "name": "dsh-novel-ai",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Novel AI 启动器插件 —— 在 DeepSeek Harness 中一键拉起 AI 长篇小说创作系统（独立窗口模式，保留原界面）",
   "keywords": [
     "dsh",
@@ -8,7 +8,8 @@
     "deepseek-harness",
     "novel",
     "writing",
-    "小说"
+    "小说",
+    "launcher"
   ],
   "type": "module",
   "main": "lib/index.js",
@@ -18,8 +19,20 @@
     "web",
     "assets",
     "cordis.patch.yml",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Shzzzy/dsh-novel-ai.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Shzzzy/dsh-novel-ai/issues"
+  },
+  "homepage": "https://github.com/Shzzzy/dsh-novel-ai#readme",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
