@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 安装引擎依赖
+        run: pip install -r runtime/requirements.txt
+
+      - name: 语法检查 (lib/*.js)
+        run: |
+          node --check lib/launcher.js
+          node --check lib/index.js
+          node --check lib/verify.js
+
+      - name: 单元测试 (node:test)
+        run: node --test "tests/**/*.test.mjs"
+
+      - name: 场景测试 (集成: 锁/生命周期/watchdog 自愈)
+        run: node --test tests/scenario/scenarios.mjs
+
+      - name: 全接口自检 (verify.js)
+        run: |
+          node lib/launcher.js start --daemon
+          sleep 8
+          node lib/verify.js
+        continue-on-error: false
+
+      - name: 清理
+        if: always()
+        run: node lib/launcher.js stop || true
