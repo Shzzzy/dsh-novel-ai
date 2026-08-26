@@ -495,7 +495,7 @@ class Orchestrator(BaseAgent):
         # 学习区集成 (§15.4)
         learning_appendix = self._get_learning_context(
             chapter_title=chapter.title if chapter else "",
-            chapter_type=chapter.chapter_type if chapter else "",
+            chapter_type=getattr(chapter, "chapter_type", "") or (event.type if event else "key"),
         )
         if learning_appendix:
             augmented_style += "\n\n" + learning_appendix

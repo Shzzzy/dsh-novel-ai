@@ -279,10 +279,14 @@ async def create_novel(req: CreateNovelRequest):
 @app.post("/api/skeleton/next-question", response_model=NextQuestionResponse)
 async def next_question(req: NextQuestionRequest):
     """骨架工坊——生成下一轮问题 + 便签建议"""
+    # 修复: 前端不传 api_key 时 fallback 到引擎 settings 中配置的 key
+    from engine.settings_manager import get_settings as _get_settings
+    _mgr = _get_settings()
+    _skeleton_cfg = _mgr.get_llm_config("skeleton")
     config = AgentConfig(
         name="skeleton",
-        model=req.model,
-        api_key=req.api_key,
+        model=req.model or (_skeleton_cfg.model if _skeleton_cfg else "deepseek-chat"),
+        api_key=req.api_key or (_skeleton_cfg.api_key if _skeleton_cfg else ""),
         provider="deepseek",
         temperature=0.7,
     )
@@ -334,10 +338,14 @@ async def next_question(req: NextQuestionRequest):
 @app.post("/api/skeleton/generate", response_model=SkeletonResponse)
 async def generate_skeleton(req: SkeletonRequest):
     """骨架工坊——从累积答案生成事件和情节"""
+    # 修复: 前端不传 api_key 时 fallback 到引擎 settings 中配置的 key
+    from engine.settings_manager import get_settings as _get_settings
+    _mgr = _get_settings()
+    _skeleton_cfg = _mgr.get_llm_config("skeleton")
     config = AgentConfig(
         name="skeleton",
-        model=req.model,
-        api_key=req.api_key,
+        model=req.model or (_skeleton_cfg.model if _skeleton_cfg else "deepseek-chat"),
+        api_key=req.api_key or (_skeleton_cfg.api_key if _skeleton_cfg else ""),
         provider="deepseek",
         temperature=0.7,
     )
@@ -429,7 +437,13 @@ async def agent_websocket(ws: WebSocket):
                             emoji="🎯", color="#e6ddd0")
 
                 # 构建上下文 — api_key 贯穿所有 Agent
-                ak = api_key or data.get("apiKey", "")
+                # 修复: 前端 WS 消息不传 key 时 fallback 到引擎 settings 配置
+                if not api_key and not data.get("apiKey", ""):
+                    _wcfg = get_settings().get_llm_config("writer")
+                    ak = _wcfg.api_key if _wcfg else ""
+                    model = data.get("model") or (_wcfg.model if _wcfg else "deepseek-chat")
+                else:
+                    ak = api_key or data.get("apiKey", "")
                 config = AgentConfig(name="orchestrator", model=model,
                                      api_key=ak, provider="deepseek")
                 sync_layer = SyncLayer()
