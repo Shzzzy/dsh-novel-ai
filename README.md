@@ -62,6 +62,18 @@ node lib/launcher.js status            # 状态查询（含引擎进程详情）
 node lib/launcher.js restart --daemon  # 平滑重启
 ```
 
+## 测试体系
+
+```bash
+npm test                  # 单元测试 14 用例 (PID/存活/日志轮转/Python探测/锁)
+npm run test:scenario     # 场景测试 5 用例 (锁竞争/生命周期/崩溃自愈)
+npm run verify            # 全接口自检 35 用例 (需引擎运行)
+```
+
+- 单元测试：`node:test` 零依赖，覆盖 launcher 内部工具（`__internals`）
+- 场景测试：真实进程集成（需要 Python 引擎依赖已装）
+- CI：GitHub Actions 自动跑 语法检查 + 单元 + 场景 + 自检
+
 ## 接口自检
 
 ```bash
