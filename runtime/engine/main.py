@@ -1319,7 +1319,80 @@ async def update_user_prefs(req: UserPrefsUpdate):
 
 
 # ═══════════════════════════════════════════════════════════════
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 叙事账本 + 硬规则审计 + 句式分析 API (增强模块)
+# ═══════════════════════════════════════════════════════════════════════════
+
+from brains.ledger import get_ledger
+
+
+class LedgerEventRequest(BaseModel):
+    chapter: int = 0
+    field: str = "custom"
+    target: str = ""
+    delta: float | None = None
+    note: str = ""
+
+
+class LedgerBatchRequest(BaseModel):
+    events: list[LedgerEventRequest]
+
+
+@app.post("/api/ledger/{novel_id}/events")
+async def ledger_record(novel_id: str, req: LedgerBatchRequest):
+    """批量入账事件"""
+    rows = [
+        {"chapter": e.chapter, "field": e.field, "target": e.target,
+         "delta": e.delta, "note": e.note}
+        for e in req.events
+    ]
+    n = get_ledger(novel_id).events_batch(rows)
+    return {"ok": True, "recorded": n}
+
+
+@app.get("/api/ledger/{novel_id}/events")
+async def ledger_events(novel_id: str, chapter: int | None = None,
+                        field: str | None = None, limit: int = 200):
+    """查询事件流"""
+    return {"events": get_ledger(novel_id).events(chapter=chapter, field=field, limit=limit)}
+
+
+@app.get("/api/ledger/{novel_id}/balances/{field}")
+async def ledger_balances(novel_id: str, field: str):
+    """查询某字段全部余额"""
+    return {"field": field, "balances": get_ledger(novel_id).balances(field)}
+
+
+@app.get("/api/ledger/{novel_id}/stats")
+async def ledger_stats(novel_id: str):
+    """账本统计"""
+    lg = get_ledger(novel_id)
+    return {"novel_id": novel_id, **lg.counts()}
+
+
+@app.post("/api/canon/{novel_id}/audit")
+async def canon_hard_audit(novel_id: str):
+    """14 条叙事不变量硬规则审计"""
+    return {"novel_id": novel_id, **get_ledger(novel_id).audit()}
+
+
+class StyleMetricsRequest(BaseModel):
+    text: str
+    min_words: int = 500
+
+
+@app.post("/api/style/metrics")
+async def style_metrics(req: StyleMetricsRequest):
+    """轻量本地句式分析 (零 API 成本)"""
+    from brains.style_metrics import analyze_style
+    return analyze_style(req.text)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # 入口 (置于文件末尾, 确保所有路由注册后再启动服务)
+# ═══════════════════════════════════════════════════════════════════════════
+
 # ═══════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
