@@ -821,6 +821,26 @@ class Orchestrator(BaseAgent):
         # P2-11: 自动版本快照（完成路径）
         _auto_save_version(chapter, ch_id)
 
+        # ── 增强: 章节锚点对账 — 自动入账字数 + 14条硬规则审计 ──
+        try:
+            from brains.ledger import get_ledger
+            nid = getattr(chapter, 'novel_id', '') or 'novel-unknown'
+            lg = get_ledger(nid)
+            lg.event(chapter=chapter.order, field="wordcount",
+                     target=f"ch-{chapter.order:03d}",
+                     delta=chapter.word_count,
+                     note=f"第{chapter.order}章《{chapter.title}》完成")
+            _report = lg.audit()
+            _crit = _report["summary"]["critical"]
+            if _crit:
+                yield {"agent": "orchestrator",
+                       "text": f"> 硬规则审计: ⚠ {_crit} 条严重问题 (共{_report['summary']['total']}条)"}
+            else:
+                yield {"agent": "orchestrator",
+                       "text": f"> 硬规则审计: ✓ 全部通过 ({len(_report['violations'])} 条提示)"}
+        except Exception:
+            pass  # 审计失败不阻塞管线
+
         yield {"agent": "orchestrator", "text": f">>> 第{chapter.order}章 完成 ✓ <<<"}
 
     async def _run_review_loop(self, chapter, context_pkg, writer, ch_id, max_rounds):
